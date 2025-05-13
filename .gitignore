@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Reports and openmdao outputs
+*reports*
+*.openmdao_out
