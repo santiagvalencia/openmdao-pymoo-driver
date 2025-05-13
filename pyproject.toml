@@ -1,7 +1,7 @@
 [project]
 name = "openmdao-pymoo-driver"
 version = "0.1.0"
-description = "Add your description here"
+description = "An OpenMDAO driver that integrates the pymoo multi-objective optimization library into OpenMDAO workflows."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
