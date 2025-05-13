@@ -2,8 +2,9 @@ import openmdao.api as om
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.algorithms.soo.nonconvex.de import DE
 from pymoo.algorithms.soo.nonconvex.ga import GA
-from pymoo.algorithms.soo.nonconvex.nelder import NelderMead, NelderAndMeadTermination
+from pymoo.algorithms.soo.nonconvex.nelder import NelderAndMeadTermination, NelderMead
 from pymoo.core.algorithm import Algorithm
+from pymoo.termination.default import DefaultSingleObjectiveTermination
 
 from pymoo_driver.driver import PymooDriver
 
@@ -25,7 +26,7 @@ class SphereComp(om.ExplicitComponent):
         outputs["g"] = 1 - x - y
 
 
-def make_and_run_problem(algorithm: Algorithm):
+def make_and_run_problem(algorithm: Algorithm, verbose=False):
     prob = om.Problem()
     model = prob.model
 
@@ -33,7 +34,7 @@ def make_and_run_problem(algorithm: Algorithm):
     prob.driver = PymooDriver()
     prob.driver.options["algorithm"] = algorithm
     prob.driver.options["termination"] = algorithm.termination
-    prob.driver.options["verbose"] = False
+    prob.driver.options["verbose"] = verbose
 
     model.add_design_var("x", lower=-2.0, upper=2.0)
     model.add_design_var("y", lower=-2.0, upper=2.0)
@@ -46,9 +47,9 @@ def make_and_run_problem(algorithm: Algorithm):
 
     prob.run_driver()
 
-    print(
-        f"Best solution found using {algorithm.__repr__().split(' ')[0].split('.')[-1]}:"
-    )
+    algorithm_name = algorithm.__repr__().split(" ")[0].split(".")[-1]
+
+    print(f"Best solution found using {algorithm_name}:")
     print(f"x = {prob.get_val('x')}")
     print(f"y = {prob.get_val('y')}")
     print(f"f = {prob.get_val('f')}")
@@ -59,12 +60,15 @@ def run():
     algorithms = [
         NSGA2(pop_size=40, termination=("n_gen", 10)),
         DE(pop_size=40, termination=("n_gen", 10)),
-        GA(pop_size=40, termination=("n_gen", 10)),
+        GA(
+            pop_size=40,
+            termination=DefaultSingleObjectiveTermination(xtol=1e-6, cvtol=1e-6),
+        ),
         NelderMead(termination=NelderAndMeadTermination()),
     ]
 
     for algorithm in algorithms:
-        make_and_run_problem(algorithm)
+        make_and_run_problem(algorithm, verbose=True)
 
 
 if __name__ == "__main__":
