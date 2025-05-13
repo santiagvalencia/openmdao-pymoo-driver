@@ -1,10 +1,10 @@
 import numpy as np
 from openmdao.core.driver import Driver
-from pymoo.optimize import minimize
-from pymoo.core.problem import ElementwiseProblem
 from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.termination import get_termination
+from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.termination import Termination
+from pymoo.optimize import minimize
+from pymoo.termination import get_termination
 
 from .evaluator import OpenMDAOEvaluator
 
