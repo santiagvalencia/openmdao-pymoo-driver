@@ -1,1 +1,1 @@
-from .driver import PymooDriver
+from .driver import PymooDriver  # noqa: F401

@@ -15,3 +15,4 @@ wheels/
 # Reports and openmdao outputs
 *reports*
 *.openmdao_out
+*_out
