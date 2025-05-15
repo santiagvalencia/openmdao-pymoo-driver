@@ -1,8 +1,16 @@
 import openmdao.api as om
-from pymoo.algorithms.moo.nsga2 import NSGA2
+
 from pymoo.algorithms.soo.nonconvex.de import DE
+from pymoo.algorithms.soo.nonconvex.direct import DIRECT
+from pymoo.algorithms.soo.nonconvex.g3pcx import G3PCX
+from pymoo.algorithms.soo.nonconvex.ga_niching import NicheGA
 from pymoo.algorithms.soo.nonconvex.ga import GA
-from pymoo.algorithms.soo.nonconvex.nelder import NelderAndMeadTermination, NelderMead
+from pymoo.algorithms.soo.nonconvex.nelder import NelderMead
+from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
+from pymoo.algorithms.soo.nonconvex.pso import PSO
+from pymoo.algorithms.soo.nonconvex.random_search import RandomSearch
+
+
 from pymoo.core.algorithm import Algorithm
 from pymoo.termination.default import DefaultSingleObjectiveTermination
 
@@ -47,7 +55,7 @@ def make_and_run_problem(algorithm: Algorithm, verbose=False):
 
     prob.run_driver()
 
-    algorithm_name = algorithm.__repr__().split(" ")[0].split(".")[-1]
+    algorithm_name = algorithm.__class__.__name__
 
     print(f"Best solution found using {algorithm_name}:")
     print(f"x = {prob.get_val('x')}")
@@ -57,14 +65,17 @@ def make_and_run_problem(algorithm: Algorithm, verbose=False):
 
 
 def run():
+    termination = DefaultSingleObjectiveTermination(xtol=1e-6, cvtol=1e-6)
     algorithms = [
-        NSGA2(pop_size=40, termination=("n_gen", 10)),
-        DE(pop_size=40, termination=("n_gen", 10)),
-        GA(
-            pop_size=40,
-            termination=DefaultSingleObjectiveTermination(xtol=1e-6, cvtol=1e-6),
-        ),
-        NelderMead(termination=NelderAndMeadTermination()),
+        DE(termination=termination),
+        DIRECT(termination=termination),
+        G3PCX(termination=termination),
+        NicheGA(termination=termination, return_all_opt=False),
+        GA(termination=termination),
+        NelderMead(termination=termination),
+        PatternSearch(termination=termination),
+        PSO(termination=termination),
+        RandomSearch(termination=termination),
     ]
 
     for algorithm in algorithms:
