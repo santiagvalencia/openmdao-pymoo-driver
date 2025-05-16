@@ -16,3 +16,6 @@ wheels/
 *reports*
 *.openmdao_out
 *_out
+
+# jupyter
+*.ipynb

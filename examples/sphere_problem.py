@@ -1,20 +1,23 @@
-import openmdao.api as om
+import os
+from pathlib import Path
 
+import matplotlib.pyplot as plt
+import openmdao.api as om
 from pymoo.algorithms.soo.nonconvex.de import DE
 from pymoo.algorithms.soo.nonconvex.direct import DIRECT
 from pymoo.algorithms.soo.nonconvex.g3pcx import G3PCX
-from pymoo.algorithms.soo.nonconvex.ga_niching import NicheGA
 from pymoo.algorithms.soo.nonconvex.ga import GA
+from pymoo.algorithms.soo.nonconvex.ga_niching import NicheGA
 from pymoo.algorithms.soo.nonconvex.nelder import NelderMead
 from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.algorithms.soo.nonconvex.random_search import RandomSearch
-
-
 from pymoo.core.algorithm import Algorithm
 from pymoo.termination.default import DefaultSingleObjectiveTermination
 
 from pymoo_driver.driver import PymooDriver
+
+SCRIPT_DIR = Path(os.path.dirname(os.path.realpath(__file__)))
 
 
 class SphereComp(om.ExplicitComponent):
@@ -35,14 +38,22 @@ class SphereComp(om.ExplicitComponent):
 
 
 def make_and_run_problem(algorithm: Algorithm, verbose=False):
-    prob = om.Problem()
+    algorithm_name = algorithm.__class__.__name__
+    problem_name = f"sphere_{algorithm_name}"
+
+    prob = om.Problem(name=problem_name)
     model = prob.model
+
+    prob.options["work_dir"] = SCRIPT_DIR
 
     model.add_subsystem("sphere", SphereComp(), promotes=["*"])
     prob.driver = PymooDriver()
     prob.driver.options["algorithm"] = algorithm
     prob.driver.options["termination"] = algorithm.termination
     prob.driver.options["verbose"] = verbose
+
+    prob.driver.recording_options["record_objectives"] = True
+    prob.driver.add_recorder(om.SqliteRecorder(f"driver_cases_{algorithm_name}.sqlite"))
 
     model.add_design_var("x", lower=-2.0, upper=2.0)
     model.add_design_var("y", lower=-2.0, upper=2.0)
@@ -54,14 +65,25 @@ def make_and_run_problem(algorithm: Algorithm, verbose=False):
     prob.set_val("y", 0.5)
 
     prob.run_driver()
-
-    algorithm_name = algorithm.__class__.__name__
+    prob.cleanup()
 
     print(f"Best solution found using {algorithm_name}:")
     print(f"x = {prob.get_val('x')}")
     print(f"y = {prob.get_val('y')}")
     print(f"f = {prob.get_val('f')}")
     print(f"g = {prob.get_val('g')}")
+
+    cr = om.CaseReader(
+        SCRIPT_DIR / f"{problem_name}_out/driver_cases_{algorithm_name}.sqlite"
+    )
+    driver_cases = list(cr.get_cases("driver"))
+    print(driver_cases[0].__dict__)
+    iters = [i for i, _ in enumerate(driver_cases, start=1)]
+    print(iters)
+    objs = [list(case.get_objectives().values())[0] for case in driver_cases]
+    print(objs)
+    plt.plot(iters, objs)
+    plt.show()
 
 
 def run():
@@ -80,6 +102,7 @@ def run():
 
     for algorithm in algorithms:
         make_and_run_problem(algorithm, verbose=True)
+        break
 
 
 if __name__ == "__main__":

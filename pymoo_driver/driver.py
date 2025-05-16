@@ -75,6 +75,9 @@ class PymooDriver(Driver):
 
         termination_opt = self.options["termination"]
 
+        def _pymoo_callback(algorithm):
+            self.record_iteration()
+
         res = minimize(
             prob,
             self.options["algorithm"],
@@ -82,7 +85,10 @@ class PymooDriver(Driver):
             if isinstance(termination_opt, Termination)
             else get_termination(*termination_opt),
             verbose=self.options["verbose"],
+            callback=_pymoo_callback,
         )
+
+        self.record_iteration()
 
         self._apply_solution(res.X)
         return False
